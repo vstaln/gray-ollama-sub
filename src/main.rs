@@ -42,6 +42,7 @@ fn manifest() -> Value {
             &["models", "chat"], CACHE_TTL_SECS,
         )],
         "commands": ["/ollama"],
+        "command_descriptions": {"/ollama": "switch to Ollama models"},
         "subcommands": ["ollama"],
     })
 }
