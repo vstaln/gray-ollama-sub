@@ -32,7 +32,12 @@ const CACHE_TTL_SECS: u64 = 0;
 
 /// Static catalog used only when the /models probe can't reach a server.
 const FALLBACK_MODELS: &[&str] = &[
-    "llama3.2", "llama3.1", "qwen3", "mistral", "deepseek-r1", "phi4",
+    "llama3.2",
+    "llama3.1",
+    "qwen3",
+    "mistral",
+    "deepseek-r1",
+    "phi4",
 ];
 
 fn manifest() -> Value {
@@ -74,7 +79,10 @@ fn read_config() -> Value {
 
 fn write_config(v: &Value) -> std::io::Result<()> {
     std::fs::create_dir_all(state_dir())?;
-    std::fs::write(config_path(), format!("{}\n", serde_json::to_string_pretty(v)?))?;
+    std::fs::write(
+        config_path(),
+        format!("{}\n", serde_json::to_string_pretty(v)?),
+    )?;
     // Key material may live here — lock it down.
     #[cfg(unix)]
     {
@@ -96,11 +104,13 @@ fn cache_credential(params: &Value) {
 
 fn resolve() -> Compat {
     let file = read_config();
-    let base = std::env::var(ENV_BASE).ok()
+    let base = std::env::var(ENV_BASE)
+        .ok()
         .filter(|s| !s.is_empty())
         .or_else(|| file["base_url"].as_str().map(str::to_string))
         .unwrap_or_else(|| DEFAULT_BASE.to_string());
-    let key = std::env::var(ENV_KEY).ok()
+    let key = std::env::var(ENV_KEY)
+        .ok()
         .filter(|s| !s.is_empty())
         .or_else(|| file["api_key"].as_str().map(str::to_string));
     Compat::new(base, key)
@@ -127,8 +137,11 @@ fn provider_models(params: &Value) -> Result<Value, Value> {
                 .map(|id| json!({"id": id, "name": id}))
                 .collect();
             if rows.is_empty() {
-                Err(err("unavailable",
-                    format!("couldn't list models from {}", cfg.upstream_base), true))
+                Err(err(
+                    "unavailable",
+                    format!("couldn't list models from {}", cfg.upstream_base),
+                    true,
+                ))
             } else {
                 Ok(json!({"models": rows}))
             }
@@ -165,7 +178,11 @@ fn cli_help() -> String {
 
 fn cli_status() -> String {
     let cfg = resolve();
-    let key_src = cfg.api_key.is_some().then(key_source_label).unwrap_or_default();
+    let key_src = cfg
+        .api_key
+        .is_some()
+        .then(key_source_label)
+        .unwrap_or_default();
     let probe = match probe_models(&cfg) {
         Ok(rows) => format!("{} models", rows.len()),
         Err(e) => format!("unreachable ({e})"),
@@ -184,7 +201,11 @@ fn cli_status() -> String {
 /// Which rung of the credential ladder answered — shown in `status` so
 /// "set" never leaves the user guessing where the key lives.
 fn key_source_label() -> String {
-    if std::env::var(ENV_KEY).ok().filter(|s| !s.is_empty()).is_some() {
+    if std::env::var(ENV_KEY)
+        .ok()
+        .filter(|s| !s.is_empty())
+        .is_some()
+    {
         format!("env {ENV_KEY}")
     } else {
         "config api_key".to_string()
@@ -244,7 +265,12 @@ fn handle(intents: &Intents, method: &str, params: &Value) -> Value {
         "command/run" => {
             let argv: Vec<String> = params["argv"]
                 .as_array()
-                .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(Value::as_str)
+                        .map(str::to_string)
+                        .collect()
+                })
                 .unwrap_or_default();
             // Bare `/<name>`: empty result — the host's provider-login
             // shortcut switches the session (subscription-plugin convention).
@@ -267,7 +293,9 @@ fn sidecar() -> std::io::Result<()> {
     let mut out = std::io::stdout().lock();
     for line in stdin.lock().lines() {
         let line = line?;
-        let Ok(v) = serde_json::from_str::<Value>(&line) else { continue };
+        let Ok(v) = serde_json::from_str::<Value>(&line) else {
+            continue;
+        };
         let method = v["method"].as_str().unwrap_or("");
         match v.get("id").cloned() {
             None if method == "plugin/shutdown" => return Ok(()),
