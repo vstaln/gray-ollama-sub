@@ -1,7 +1,7 @@
 //! ollama-sub — Gray provider sidecar for a local Ollama server.
 //!
 //! The host speaks OpenAI-Responses to a per-turn loopback relay
-//! (`acp_bridge::relay`); we translate to Ollama's OpenAI-compatible
+//! (`gray_acp::relay`); we translate to Ollama's OpenAI-compatible
 //! `/v1/chat/completions` via `openai_compat`. No key needed by default —
 //! set OLLAMA_API_KEY or `api_key` in ~/.gray/ollama/config.json only if
 //! you put Ollama behind an authenticated proxy.
@@ -12,8 +12,8 @@
 use std::io::{BufRead, Write};
 use std::sync::Arc;
 
-use acp_bridge::manifest as pmanifest;
-use acp_bridge::relay::{self, Intents};
+use gray_acp::manifest as pmanifest;
+use gray_acp::relay::{self, Intents};
 use openai_compat::{compat_turn, credential_key, probe_models, Compat};
 use serde_json::{json, Value};
 
